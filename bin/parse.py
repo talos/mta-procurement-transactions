@@ -66,6 +66,7 @@ def parse(infile):
 
     writer.writeheader()
     for page in pages[2:]:
+        page = page.decode('iso8859')
 
         lh, ld = locate(r'Vendor Name:\s+\S', page)
         rh, rd = locate(r'Type of Procurement:\s+\S', page)
@@ -73,26 +74,48 @@ def parse(infile):
         # Accumulators
         lha, lda, rha, rda = (u'', u'', u'', u'')
 
+        _ = lambda x: x.replace(' ', '_').strip()
+        __ = lambda x, y: _(x) + u'_' + _(y)
+
         for line in page.splitlines():
             left_header = line[lh-2:ld-3].strip().replace(':', '')
             left_data = line[ld-3:rh-2].strip()
             right_header = line[rh-2:rd-4].strip().replace(':', '')
             right_data = line[rd-4:].strip()
 
-            lha += left_header
-            lda += left_data
-            rha += right_header
-            rda += right_data
-
-            if lha.replace(' ', '_') in COLUMNS:
-                output[lha.replace(' ', '_')] = lda
+            if _(lha) in COLUMNS and not __(lha, left_header) in COLUMNS:
+                output[_(lha)] = lda
                 lha = u''
                 lda = u''
 
-            if rha.replace(' ', '_') in COLUMNS:
-                output[rha.replace(' ', '_')] = rda
+            if _(rha) in COLUMNS and not __(rha, right_header) in COLUMNS:
+                output[_(rha)] = rda
                 rha = u''
                 rda = u''
+
+            if left_header:
+                if lha:
+                    lha += u' ' + left_header
+                else:
+                    lha = left_header
+
+            if left_data:
+                if lda:
+                    lda += u' ' + left_data
+                else:
+                    lda = left_data
+
+            if right_header:
+                if rha:
+                    rha += u' ' + right_header
+                else:
+                    rha = right_header
+
+            if right_data:
+                if rda:
+                    rda += u' ' + right_data
+                else:
+                    rda = right_data
 
         writer.writerow(output)
 

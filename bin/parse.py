@@ -8,7 +8,6 @@ import codecs
 
 
 COLUMNS = (
-    u'status',
     u'vendor_number',
     u'vendor_name',
     u'transaction_number',

@@ -4,6 +4,7 @@
 import sys
 import csv
 import re
+import codecs
 
 
 COLUMNS = (
@@ -57,7 +58,11 @@ def locate(pattern, page):
 
 
 def parse(infile):
-    writer = csv.DictWriter(sys.stdout, COLUMNS)
+
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
+    writer = csv.DictWriter(codecs.getwriter('utf8')(sys.stdout), COLUMNS)
     output = {}
     pages = infile.read().split('Procurement Transactions Listing:')
 
@@ -84,7 +89,10 @@ def parse(infile):
                 break
 
             if line[lh-3:lh-2] != '.':
-                loffset = 3
+                if re.search(r'\d', line[lh-3:lh-2]):
+                    loffset = 2
+                else:
+                    loffset = 3
             else:
                 loffset = 2
 

@@ -8,6 +8,7 @@ import codecs
 
 
 COLUMNS = (
+    u'number',
     u'vendor_number',
     u'vendor_name',
     u'transaction_number',
@@ -96,9 +97,9 @@ def parse(infile):
                 loffset = 2
 
             left_header = line[lh-loffset:ld-3].strip().replace(':', '')
-            left_data = line[ld-3:rh-2].strip()
+            left_data = line[ld-3:rh-2].strip('" ')
             right_header = line[rh-2:rd-4].strip().replace(':', '')
-            right_data = line[rd-4:].strip()
+            right_data = line[rd-4:].strip('" ')
 
             if _(lha) in COLUMNS and not __(lha, left_header) in COLUMNS:
                 output[_(lha)] = lda

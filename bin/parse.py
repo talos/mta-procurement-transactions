@@ -8,7 +8,7 @@ import codecs
 
 
 COLUMNS = (
-    u'number',
+    u'page_number',
     u'vendor_number',
     u'vendor_name',
     u'transaction_number',
@@ -57,18 +57,29 @@ def locate(pattern, page):
     raise Exception(u"Could not find {} in page '{}'".format(pattern, page))
 
 
+def process_data(data):
+    if re.search(r'^\$[\d,.]+$', data):
+        return data.translate({ord('$'): None, ord(','): None})
+    elif data == '****************': # Blacked out?  This messes with numbers.
+        return ''
+    return data
+
+
 def parse(infile):
 
     reload(sys)
     sys.setdefaultencoding('utf-8')
 
     writer = csv.DictWriter(codecs.getwriter('utf8')(sys.stdout), COLUMNS)
-    output = {}
     pages = infile.read().split('Procurement Transactions Listing:')
 
     writer.writeheader()
-    for page in pages[2:]:
+    for i, page in enumerate(pages[2:]):
         page = page.decode('iso8859')
+
+        output = {
+            'page_number': i + 2,
+        }
 
         lh, ld = locate(r'Vendor Name:\s+\S', page)
         rh, rd = locate(r'Type of Procurement:\s+\S', page)
@@ -88,6 +99,10 @@ def parse(infile):
                     output[_(rha)] = rda
                 break
 
+            vendor_number_match = re.search(r'^(\d+)\.?\s*Vendor Name:', line)
+            if vendor_number_match:
+                output[u'vendor_number'] = vendor_number_match.group(1)
+
             if line[lh-3:lh-2] != '.':
                 if re.search(r'\d', line[lh-3:lh-2]):
                     loffset = 2
@@ -101,13 +116,25 @@ def parse(infile):
             right_header = line[rh-2:rd-4].strip().replace(':', '')
             right_data = line[rd-4:].strip('" ')
 
+            if left_data:
+                if lda:
+                    lda += u' ' + left_data
+                else:
+                    lda = left_data
+
+            if right_data:
+                if rda:
+                    rda += u' ' + right_data
+                else:
+                    rda = right_data
+
             if _(lha) in COLUMNS and not __(lha, left_header) in COLUMNS:
-                output[_(lha)] = lda
+                output[_(lha)] = process_data(lda)
                 lha = u''
                 lda = u''
 
             if _(rha) in COLUMNS and not __(rha, right_header) in COLUMNS:
-                output[_(rha)] = rda
+                output[_(rha)] = process_data(rda)
                 rha = u''
                 rda = u''
 
@@ -117,23 +144,11 @@ def parse(infile):
                 else:
                     lha = left_header
 
-            if left_data:
-                if lda:
-                    lda += u' ' + left_data
-                else:
-                    lda = left_data
-
             if right_header:
                 if rha:
                     rha += u' ' + right_header
                 else:
                     rha = right_header
-
-            if right_data:
-                if rda:
-                    rda += u' ' + right_data
-                else:
-                    rda = right_data
 
         writer.writerow(output)
 

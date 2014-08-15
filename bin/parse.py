@@ -45,10 +45,6 @@ COLUMNS = (
 )
 
 
-WAITING = 'waiting'
-LISTENING = 'listening'
-
-
 def locate(pattern, page):
     for line in page.splitlines():
         match = re.search(pattern, page)
@@ -87,8 +83,8 @@ def parse(infile):
         # Accumulators
         lha, lda, rha, rda = (u'', u'', u'', u'')
 
-        _ = lambda x: x.replace(' ', '_').strip().lower()
-        __ = lambda x, y: _(x) + u'_' + _(y)
+        _ = lambda x: x.strip().replace(' ', '_').lower()
+        __ = lambda x, y: (_(x) + u'_' + _(y)).strip('_')
 
         for line in page.splitlines():
             if re.search(r'Page\s+\d+\s+of\s+\d+', line):
@@ -116,18 +112,6 @@ def parse(infile):
             right_header = line[rh-2:rd-4].strip().replace(':', '')
             right_data = line[rd-4:].strip('" ')
 
-            if left_data:
-                if lda:
-                    lda += u' ' + left_data
-                else:
-                    lda = left_data
-
-            if right_data:
-                if rda:
-                    rda += u' ' + right_data
-                else:
-                    rda = right_data
-
             if _(lha) in COLUMNS and not __(lha, left_header) in COLUMNS:
                 output[_(lha)] = process_data(lda)
                 lha = u''
@@ -139,16 +123,16 @@ def parse(infile):
                 rda = u''
 
             if left_header:
-                if lha:
-                    lha += u' ' + left_header
-                else:
-                    lha = left_header
+                lha = (lha + u' ' + left_header).strip(' ')
 
             if right_header:
-                if rha:
-                    rha += u' ' + right_header
-                else:
-                    rha = right_header
+                rha = (rha + u' ' + right_header).strip(' ')
+
+            if left_data:
+                lda = (lda + u' ' + left_data).strip(' ')
+
+            if right_data:
+                rda = (rda + u' ' + right_data).strip(' ')
 
         writer.writerow(output)
 

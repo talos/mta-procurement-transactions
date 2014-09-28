@@ -7,7 +7,7 @@ import re
 import codecs
 
 
-transaction_number = lambda s: re.search('^[0-9\-]+$', s) or s == u''
+transaction_number = lambda s: re.search('^[0-9A-Za-z\-]+$', s) or s == u''
 integer = lambda s: re.search(r'^\d+$', s) or s == u''
 money = lambda s: re.search(r'^-?\$[0-9,]+\.?\d*$', s) or s in (u'', u'****************')
 text = lambda s: True
@@ -78,7 +78,7 @@ def locate(pattern, page):
 
 
 def process_data(data):
-    if re.search(r'^\$[\d,.]+$', data):
+    if re.search(r'^-?\$[\d,.]+$', data):
         return data.translate({ord('$'): None, ord(','): None})
     elif data == '****************': # Blacked out?  This messes with numbers.
         return ''

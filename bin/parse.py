@@ -7,7 +7,7 @@ import re
 import codecs
 
 
-transaction_number = lambda s: re.search('^[0-9A-Za-z\-]+$', s) or s == u''
+transaction_number = lambda s: re.search('^[0-9A-Za-z\-+.]+$', s) or s == u''
 integer = lambda s: re.search(r'^\d+$', s) or s == u''
 money = lambda s: re.search(r'^-?\$[0-9,]+\.?\d*$', s) or s in (u'', u'****************')
 text = lambda s: True
